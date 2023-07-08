@@ -13,7 +13,7 @@ select *
 from portfolioproject1..CovidVaccinations$
 order by 3,4
 
----select the data that we are going to use
+--select the data that we are going to use
 select location,date,total_cases,new_cases,total_deaths, population
 from portfolioproject1..CovidDeaths$
 where continent is not null
@@ -45,7 +45,7 @@ group by location,population
 order by percetPopulationInfected desc
 
 
---Counties with highest death count per population
+--Countries with highest death count per population
 select location,max(cast(total_deaths as int)) as TotalDeathCount
 from portfolioproject1..CovidDeaths$
 where continent is not null
