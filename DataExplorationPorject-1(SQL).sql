@@ -1,3 +1,9 @@
+/*
+Covid 19 Data Exploration 
+
+Skills used: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
+
+*/
 select *
 from portfolioproject1..CovidDeaths$
 where continent is not null
@@ -13,22 +19,25 @@ from portfolioproject1..CovidDeaths$
 where continent is not null
 order by 1,2
 
----looking for total cases vs total deaths
----shows likelihood of dying if you contract your country
+--Total cases vs Total deaths
+--Shows likelihood of dying if you contract covid in  your country
+
 select location,date,total_cases,total_deaths,(total_deaths/total_cases)*100 as deathPercentage
 from portfolioproject1..CovidDeaths$
 where location like '%india%'
 and continent is not null
 order by 1,2
 
---looking at total cases vs population
---shows what percentage of population got covid
+--Total cases vs Population
+--Shows what percentage of population got covid
+
 select location,date,total_cases,population,(total_cases/population)*100 as casesPercentage
 from portfolioproject1..CovidDeaths$
 --where location like '%india%'
 order by 1,2
 
---looking at country with highest infection rate compared to population
+--Country with highest infection rate compared to population
+
 select location,population,max(total_cases) as highestInfectionCount,max(total_cases/population)*100 as percetPopulationInfected
 from portfolioproject1..CovidDeaths$
 group by location,population
@@ -36,15 +45,16 @@ group by location,population
 order by percetPopulationInfected desc
 
 
----showing counties with highest death count per population
+--Counties with highest death count per population
 select location,max(cast(total_deaths as int)) as TotalDeathCount
 from portfolioproject1..CovidDeaths$
 where continent is not null
 group by location
 order by TotalDeathCount desc
 
---let's break things by continets
----shwoing continets with the highest death count per population
+-- BREAKING THINGS DOWN BY CONTINENT
+
+-- Showing contintents with the highest death count per population
 
 select continent,max(cast(total_deaths as int)) as TotalDeathCount
 from portfolioproject1..CovidDeaths$
@@ -52,14 +62,16 @@ where continent is not null
 group by continent
 order by TotalDeathCount desc
 
---global numbers
+-- GLOBAL NUMBERS
+
 select sum(new_cases) as TotalCases,sum(cast(new_deaths as int)) TotalDeaths,sum(cast(new_deaths as int))/sum(new_cases)*100 as DeathPercentage
 from portfolioproject1..CovidDeaths$
 where continent is not null
 --group by date
 order by 1,2
 
---total population vs vaccination
+--Total Population vs Vaccinations
+-- Shows Percentage of Population that has recieved at least one Covid Vaccine
 
 
 select dea.continent,dea.location,dea.date,dea.population,vac.new_vaccinations,
@@ -70,10 +82,10 @@ join portfolioproject1..CovidVaccinations$ vac
      on dea.location=vac.location
 	 and dea.date=vac.date
 where dea.continent is not null
-order by 1,2
+order by 3,4
 
 
---using CTE to perform  calculation on partition by in previous query
+--Using CTE to perform Calculation on Partition By in previous query
 
 with PopvsVac(continet,location,date,population,new_vaccinations,RollingPeoplevaccinated)
 as
@@ -91,7 +103,8 @@ select *,(RollingPeoplevaccinated/population)*100 as VaccinatedperOverPop
 from PopvsVac
 
 
---TEMP TABLE
+--Using Temp Table to perform Calculation on Partition By in previous query
+
 drop table if exists #PercetPopulationVaccinated
 create table #PercetPopulationVaccinated
 (
@@ -102,7 +115,6 @@ population numeric,
 new_vaccinations numeric,
 RollingPeoplevaccinated numeric
 )
-
 
 insert into #PercetPopulationVaccinated
 select dea.continent,dea.location,dea.date,dea.population,vac.new_vaccinations,
@@ -118,6 +130,10 @@ join portfolioproject1..CovidVaccinations$ vac
 select * ,(RollingPeoplevaccinated/population)*100
 from #PercetPopulationVaccinated
 
+
+
+
+
 --creating view to store data for later visualizations
 
 create view PercetPopulationVaccinated as
@@ -127,9 +143,6 @@ sum(convert(int,vac.new_vaccinations)) over (partition by dea.location order by 
 from portfolioproject1..CovidDeaths$ dea
 join portfolioproject1..CovidVaccinations$ vac
      on dea.location=vac.location
-	 and dea.date=vac.date
+     and dea.date=vac.date
 where dea.continent is not null
---order by 1,2
 
-select *
-from PercetPopulationVaccinated
